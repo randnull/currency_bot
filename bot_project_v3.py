@@ -2,7 +2,7 @@ import telebot
 from telebot import types
 import requests
 import json
-bot = telebot.TeleBot('1459008069:AAFiBkqHm_0slZSyhZGTvNyZw5xqXpFpvpE')
+bot = telebot.TeleBot('ТОКЕН СЮДА')
 url = "https://www.cbr-xml-daily.ru/daily_json.js"
 response = requests.get(url)
 answer = json.loads(response.text)
