@@ -4,7 +4,6 @@ import requests
 import json
 
 bot = telebot.TeleBot('ТОКЕН СЮДА')
-url = "https://www.cbr-xml-daily.ru/daily_json.js"
 response = requests.get(url)
 answer = json.loads(response.text)
 w = {}
@@ -27,15 +26,12 @@ def prognoz(message):
     bot.send_message(message.chat.id, res)
     bot.send_message(message.chat.id, "Советуем к покупке: USD")
     keyboard3 = types.InlineKeyboardMarkup()
-    url_button = types.InlineKeyboardButton(text="investing.com", url="https://ru.investing.com/currencies/usd-rub-chart")
     keyboard3.add(url_button)
     bot.send_message(message.chat.id, "Источники:", reply_markup=keyboard3)
 
 def place_for_buy_currency(message):
     keyboard = types.InlineKeyboardMarkup()
-    url_button = types.InlineKeyboardButton(text="investing.com", url="https://ru.investing.com")
-    url_button0 = types.InlineKeyboardButton(text="banki.ru", url="https://www.banki.ru/products/currency/cash/moskva/")
-    url_button00 = types.InlineKeyboardButton(text="broker.ru", url="https://broker.ru/promo/currency8/?refid=11476&utm_source=google&utm_medium=cpc&utm_campaign=767305818~Broker_Currency_RF_Poisk&utm_content=39948041946~kwd-30793872212~511201698404~c~9047028~~&gclid=Cj0KCQjwsqmEBhDiARIsANV8H3bLVfe-lhirVeiXFx1tdBSyC2_puKeoPEyd1IDvoGUkBgUYM48FHSIaAqhWEALw_wcB")
+    
     keyboard.add(url_button, url_button0, url_button00)
     bot.send_message(message.chat.id, "Валюту вы можете приобрести на данный сайтах:", reply_markup=keyboard)
 
