@@ -2,44 +2,96 @@ import telebot
 from telebot import types
 import requests
 import json
+
 bot = telebot.TeleBot('ТОКЕН СЮДА')
 url = "https://www.cbr-xml-daily.ru/daily_json.js"
 response = requests.get(url)
 answer = json.loads(response.text)
+w = {}
+
+def test_otsl(message):
+    bot.send_message(message.chat.id, "Статистика по вашим избранным валютам")
+    try:
+        for i in range(len(w[int(message.chat.id)])):
+            res = w[int(message.chat.id)][i]
+            if answer["Valute"][res]["Value"] >= answer["Valute"][res]["Previous"]:
+                res += "\U0001F7E9"
+            else:
+                res += "\U0001F7E5"
+            bot.send_message(message.chat.id, res)
+    except:
+        bot.send_message(message.chat.id, "Никакая из валют не отслеживается")
+def prognoz(message):
+    res = "На данный момент доступен только ручной прогноз от аналитиков"
+    res += "\U0001F60E:"
+    bot.send_message(message.chat.id, res)
+    bot.send_message(message.chat.id, "Советуем к покупке: USD")
+    keyboard3 = types.InlineKeyboardMarkup()
+    url_button = types.InlineKeyboardButton(text="investing.com", url="https://ru.investing.com/currencies/usd-rub-chart")
+    keyboard3.add(url_button)
+    bot.send_message(message.chat.id, "Источники:", reply_markup=keyboard3)
 
 def place_for_buy_currency(message):
     keyboard = types.InlineKeyboardMarkup()
-    url_button = types.InlineKeyboardButton(text="сайт1", url="https://yandex.ru")
-    url_button0 = types.InlineKeyboardButton(text="сайт2", url="https://yandex.ru")
-    url_button00 = types.InlineKeyboardButton(text="сайт3", url="https://yandex.ru")
-    keyboard.add(url_button,url_button0,url_button00)
+    url_button = types.InlineKeyboardButton(text="investing.com", url="https://ru.investing.com")
+    url_button0 = types.InlineKeyboardButton(text="banki.ru", url="https://www.banki.ru/products/currency/cash/moskva/")
+    url_button00 = types.InlineKeyboardButton(text="broker.ru", url="https://broker.ru/promo/currency8/?refid=11476&utm_source=google&utm_medium=cpc&utm_campaign=767305818~Broker_Currency_RF_Poisk&utm_content=39948041946~kwd-30793872212~511201698404~c~9047028~~&gclid=Cj0KCQjwsqmEBhDiARIsANV8H3bLVfe-lhirVeiXFx1tdBSyC2_puKeoPEyd1IDvoGUkBgUYM48FHSIaAqhWEALw_wcB")
+    keyboard.add(url_button, url_button0, url_button00)
     bot.send_message(message.chat.id, "Валюту вы можете приобрести на данный сайтах:", reply_markup=keyboard)
-    
+
+
+
+def spisok_valute(message):
+    try:
+        for i in range(len(w[int(message.chat.id)])):
+            bot.send_message(message.chat.id, w[int(message.chat.id)][i])
+        if len(w[int(message.chat.id)]) == 0:
+            bot.send_message(message.chat.id, "Никакая из валют не отслеживается")
+    except:
+        bot.send_message(message.chat.id, "Никакая из валют не отслеживается")
 
 
 def actualcurrency(message):
+    #print(answer["AUD"]["Name"])
     tmp = 'Актуальные курсы на сегодня: \n'
     for i in answer["Valute"]:
         tmp00 = abs(answer["Valute"][i]["Value"] - answer["Valute"][i]["Previous"])
         tmp0 = f"{tmp00:.{3}f}"
         if answer["Valute"][i]["Value"] > answer["Valute"][i]["Previous"]:
-            tmp += str("{}  = {} (вырос на {})\n ".format(i,answer["Valute"][i]["Value"],tmp0));
+            tmp += str(
+                "{}{}({})  = {} ({}{}) \n ".format("\U0001F7E9", i,answer["Valute"][i]["Name"], answer["Valute"][i]["Value"], "\U00002B06", tmp0))
         elif answer["Valute"][i]["Value"] < answer["Valute"][i]["Previous"]:
-            tmp += str("{}  = {} (упал на {})\n ".format(i, answer["Valute"][i]["Value"], tmp0))
+            tmp += str("{}{}({})  = {} ({}{}) \n ".format("\U0001F7E5", i, answer["Valute"][i]["Name"], answer["Valute"][i]["Value"],"\U00002B07",tmp0))
         else:
             tmp += str("{}  = {} (не изменился)\n ".format(i, answer["Valute"][i]["Value"]))
     bot.send_message(message.chat.id, tmp)
-    
+
 
 def otsl_valute(message, valute_actual):
-    pass
-    
+    x = int(message.chat.id)
+    y = valute_actual
+    try:
+        if y in w[x]:
+            w[x].remove(y)
+            res = "\U0000274C"
+            res += "Валюта успешно удалена из отслеживания!"
+            bot.send_message(message.chat.id, res)
+        else:
+            w[x] += [y]
+            res = "\U00002705"
+            res += "Валюта успешно добавлена для отслеживания!"
+            bot.send_message(message.chat.id, res)
+    except:
+        w[x] = [y]
+        res = "\U00002705"
+        res += "Валюта успешно добавлена для отслеживания!"
+        bot.send_message(message.chat.id, res)
+    print(w)
 
 
 @bot.message_handler(commands=["start"])
 def start(message):
     bot.send_message(message.chat.id, "/menu - для отображения меню")
-
 
 
 @bot.message_handler(commands=["menu"])
@@ -48,10 +100,11 @@ def menu(message):
     button_actual_currency = types.KeyboardButton(text="Посмотреть актуальные курсы", )
     button_buy_currency = types.KeyboardButton(text="Приобрести валюту", )
     button_otsl_valute = types.KeyboardButton(text="Отслеживать конкретную валюту", )
+    button_test = types.KeyboardButton(text="Тест", )
+    button_prognoz = types.KeyboardButton(text="Прогноз", )
     button_spisok_otsl_valute = types.KeyboardButton(text="Посмотреть список отслеживаемых валют", )
-    keyboard.add(button_actual_currency, button_buy_currency, button_otsl_valute, button_spisok_otsl_valute)
-    bot.send_message(message.chat.id,"Выберите:", reply_markup=keyboard)
-
+    keyboard.add(button_actual_currency, button_buy_currency,button_prognoz, button_otsl_valute, button_spisok_otsl_valute,button_test)
+    bot.send_message(message.chat.id, "Выберите:", reply_markup=keyboard)
 
 
 @bot.message_handler(commands=["currency"])
@@ -92,9 +145,14 @@ def currency(message):
     button_valute_032 = types.KeyboardButton(text="KRW", )
     button_valute_032 = types.KeyboardButton(text="JPY", )
     button_exit = types.KeyboardButton(text="Назад")
-    keyboard.add(button_valute_000, button_valute_001, button_valute_002, button_valute_003, button_valute_004, button_valute_005, button_valute_006, button_valute_007, button_valute_008, button_valute_009, button_valute_010, button_valute_011, button_valute_012, button_valute_013, button_valute_014, button_valute_015, button_valute_016, button_valute_017, button_valute_018, button_valute_019, button_valute_020, button_valute_021, button_valute_022, button_valute_023, button_valute_024, button_valute_025, button_valute_026, button_valute_027, button_valute_028, button_valute_029, button_valute_030, button_valute_031, button_valute_032, button_exit)
+    keyboard.add(button_valute_000, button_valute_001, button_valute_002, button_valute_003, button_valute_004,
+                 button_valute_005, button_valute_006, button_valute_007, button_valute_008, button_valute_009,
+                 button_valute_010, button_valute_011, button_valute_012, button_valute_013, button_valute_014,
+                 button_valute_015, button_valute_016, button_valute_017, button_valute_018, button_valute_019,
+                 button_valute_020, button_valute_021, button_valute_022, button_valute_023, button_valute_024,
+                 button_valute_025, button_valute_026, button_valute_027, button_valute_028, button_valute_029,
+                 button_valute_030, button_valute_031, button_valute_032, button_exit)
     bot.send_message(message.chat.id, "Выберите:", reply_markup=keyboard)
-
 
 
 @bot.message_handler(content_types=['text'])
@@ -105,6 +163,10 @@ def handle_text(message):
         place_for_buy_currency(message)
     elif message.text == "Отслеживать конкретную валюту":
         currency(message)
+    elif message.text == "Прогноз":
+        prognoz(message)
+    elif message.text == "Тест":
+        test_otsl(message)
     elif message.text == "AUD":
         otsl_valute(message, "AUD")
     elif message.text == "AZN":
@@ -175,7 +237,9 @@ def handle_text(message):
         otsl_valute(message, "JPY")
     elif message.text == "Назад":
         menu(message)
-        
+    elif message.text == "Посмотреть список отслеживаемых валют":
+        spisok_valute(message)
+
 
 if __name__ == '__main__':
     while 1:
@@ -183,3 +247,4 @@ if __name__ == '__main__':
             bot.polling(none_stop=True)
         except:
             pass
+
